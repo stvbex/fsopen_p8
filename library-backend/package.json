@@ -1,0 +1,16 @@
+{
+  "name": "books_backend",
+  "version": "0.0.1",
+  "description": "",
+  "main": "library-backend.js",
+  "scripts": {
+    "start": "node library-backend.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "dependencies": {
+    "apollo-server": "^2.19.1",
+    "graphql": "^15.4.0",
+    "uui": "^1.0.7"
+  }
+}
