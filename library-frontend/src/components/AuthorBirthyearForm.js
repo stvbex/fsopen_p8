@@ -20,7 +20,7 @@ const AuthorBirthyearForm = ({ show }) => {
     }
   })
 
-  const [setBirthyear, setBirthyearResult] = useMutation(SET_BIRTHYEAR, {
+  const [setBirthyear, ] = useMutation(SET_BIRTHYEAR, {
     refetchQueries: [{ query: ALL_AUTHORS }]
   })
 

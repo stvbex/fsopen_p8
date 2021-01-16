@@ -1,41 +1,48 @@
 import { useQuery } from '@apollo/client'
-import React from 'react'
+import React, { useState } from 'react'
 
-import { ALL_BOOKS_NO_GEN } from '../queries'
+import { ALL_BOOKS } from '../queries'
 
-const Books = (props) => {
-  const booksQuery = useQuery(ALL_BOOKS_NO_GEN)
+const Books = ({ show }) => {
+  const booksQuery = useQuery(ALL_BOOKS)
+  const [genreFilter, setGenreFilter] = useState(null)
 
-  if (!props.show) {
+  if (!show) {
     return null
   }
 
   const books = booksQuery.loading ? [] : booksQuery.data.allBooks
+  const genres = [...new Set(books.map(b => b.genres).flat())]
 
   return (
     <div>
       <h2>books</h2>
 
+      {genreFilter && <div>in genre <b>{genreFilter}</b></div>}
+
       <table>
         <tbody>
           <tr>
             <th></th>
-            <th>
-              author
-            </th>
-            <th>
-              published
-            </th>
+            <th>author</th>
+            <th>published</th>
           </tr>
-          {books.map(a =>
-            <tr key={a.title}>
-              <td>{a.title}</td>
-              <td>{a.author}</td>
-              <td>{a.published}</td>
-            </tr>
+          {books.map((b, i) =>
+            (b.genres && b.genres.includes(genreFilter)) || !genreFilter
+              ? <tr key={i}>
+                <td>{b.title}</td>
+                <td>{b.author.name}</td>
+                <td>{b.published}</td>
+              </tr>
+              : null
           )}
         </tbody>
       </table>
+
+      <div>
+        {genres.map((gen, i) => <button key={i} onClick={() => setGenreFilter(gen)}>{gen}</button>)}
+        <button onClick={() => setGenreFilter(null)}>all books</button>
+      </div>
     </div>
   )
 }
