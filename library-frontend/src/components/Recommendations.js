@@ -1,24 +1,24 @@
 import React, { useEffect, useState } from 'react'
-import { useQuery } from '@apollo/client'
+import { useLazyQuery } from '@apollo/client'
 
-import { ALL_BOOKS, ME } from '../queries'
+import { ALL_BOOKS_W_GENRE } from '../queries'
 
-const Recommendations = ({ show }) => {
-  const booksQuery = useQuery(ALL_BOOKS)
-  const meQuery = useQuery(ME)
+const Recommendations = ({ show, currentUser }) => {
+  const [getBooks, { loading: booksLoading, data: booksData }] = useLazyQuery(ALL_BOOKS_W_GENRE)
 
-  const [currentUser, setCurrentUser] = useState(null)
   const [books, setBooks] = useState([])
 
   useEffect(() => {
-    if (!meQuery.loading && meQuery.data.me) {
-      setCurrentUser(meQuery.data.me)
-
-      if (!booksQuery.loading && booksQuery.data) {
-        setBooks(booksQuery.data.allBooks.filter(b => b.genres.includes(currentUser.favoriteGenre)))
-      }
+    if (currentUser) {
+      getBooks({ variables: { genre: currentUser.favoriteGenre } })
     }
-  }, [meQuery, booksQuery, currentUser])
+  }, [currentUser, getBooks])
+
+  useEffect(() => {
+    if (!booksLoading && booksData) {
+      setBooks(booksData.allBooks)
+    }
+  }, [booksLoading, booksData])
 
   if (!show) {
     return null

@@ -5,17 +5,26 @@ import NewBook from './components/NewBook'
 import AuthorBirthyearForm from './components/AuthorBirthyearForm'
 import LoginForm from './components/LoginForm'
 import Recommendations from './components/Recommendations'
-import { useApolloClient, useSubscription } from '@apollo/client'
-import { ALL_BOOKS, BOOKS_SUBSCRIPTION } from './queries'
+import { useApolloClient, useSubscription, useQuery } from '@apollo/client'
+import { ALL_BOOKS, ALL_BOOKS_W_GENRE, BOOKS_SUBSCRIPTION, ME } from './queries'
 
 const App = () => {
+  const meQuery = useQuery(ME)
+
   const [page, setPage] = useState('authors')
   const [token, setToken] = useState(null)
+  const [currentUser, setCurrentUser] = useState(null)
   const client = useApolloClient()
 
   useEffect(() => {
     setToken(localStorage.getItem('library-app-user-token'))
   }, [])
+
+  useEffect(() => {
+    if (!meQuery.loading && meQuery.data.me) {
+      setCurrentUser(meQuery.data.me)
+    }
+  }, [meQuery])
 
   useSubscription(BOOKS_SUBSCRIPTION, {
     onSubscriptionData: ({ subscriptionData }) => {
@@ -31,14 +40,22 @@ const App = () => {
         })
       }
 
-      // works but, data loss warning
-      // const authorsInStore = client.readQuery({ query: ALL_AUTHORS })
-      // if (authorsInStore && !authorsInStore.allAuthors.map(author => author.id).includes(newBook.author.id)) {
-      //   client.writeQuery({
-      //     query: ALL_AUTHORS,
-      //     data: { allAuthors: authorsInStore.allAuthors.concat(newBook.author) }
-      //   })
-      // }
+      const booksWGenreInStore = client.readQuery({
+        query: ALL_BOOKS_W_GENRE,
+        variables: { genre: currentUser.favoriteGenre } 
+      })
+      if (
+        newBook.genres &&
+        newBook.genres.includes(currentUser.favoriteGenre) && 
+        booksWGenreInStore && 
+        !booksWGenreInStore.allBooks.map(book => book.id).includes(newBook.id)
+        ) {
+          client.writeQuery({
+            query: ALL_BOOKS_W_GENRE, 
+            variables: { genre: currentUser.favoriteGenre },
+            data: { allBooks: booksWGenreInStore.allBooks.concat(newBook) }
+          })
+        }
     }
   })
 
@@ -67,7 +84,7 @@ const App = () => {
 
       <NewBook show={page === 'add'} />
 
-      <Recommendations show={page === 'recommend'} />
+      <Recommendations show={page === 'recommend'} currentUser={currentUser} />
 
       <LoginForm show={page === 'login'} setToken={setToken} setPage={setPage} />
 
