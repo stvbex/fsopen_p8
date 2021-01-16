@@ -9,7 +9,7 @@ const jwt = require('jsonwebtoken')
 
 const pubsub = new PubSub()
 
-mongoose.set('debug', true);
+// mongoose.set('debug', true);
 
 mongoose
   .connect(process.env.MONGODB_URI, {
@@ -112,6 +112,7 @@ const typeDefs = gql`
   type Author {
     name: String!
     born: String
+    books: [Book]!
     bookCount: Int
     id: ID!
   }
@@ -192,8 +193,13 @@ const resolvers = {
     me: (root, args, context) => context.currentUser
   },
   Author: {
+    books: async root => {
+      const author = await Author.findOne({ _id: root._id }).populate('books')
+      const books = author.books
+      return books
+    },
     bookCount: (root) => {
-      return Book.find({ author: root._id }).countDocuments()
+      return root.books.length
     }
   },
   Mutation: {
@@ -232,6 +238,9 @@ const resolvers = {
             author,
             genres: args.genres
           })
+
+          author.books = author.books.concat(newBook._id)
+          await author.save()
 
           pubsub.publish('BOOK_ADDED', { bookAdded: newBook })
 
